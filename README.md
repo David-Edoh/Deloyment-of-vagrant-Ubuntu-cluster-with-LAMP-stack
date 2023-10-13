@@ -11,7 +11,7 @@ To use the script, follow these steps:
 1. **Run the Script:**
 
    ```bash
-   ./vagrant_setup.sh
+   ./master_slave.sh
    ```
 
 
