@@ -36,6 +36,7 @@ password="${password:-$default_password}"
 # Define VM names
 master_vm="master"
 slave_vm="slave"
+load_balancer_vm="load_balancer"
 
 # Define VM configurations
 vm_memory="512"
@@ -71,14 +72,24 @@ Vagrant.configure("2") do |config|
       vb.cpus = 1
     end
   end
+
+  config.vm.define "$load_balancer_vm" do |$load_balancer_vm|
+    $load_balancer_vm.vm.box = "$vm_box"
+    $load_balancer_vm.vm.network "private_network", type: "dhcp"
+    $load_balancer_vm.vm.provider "virtualbox" do |vb|
+      vb.memory = "$vm_memory"
+      vb.cpus = 1
+    end
+  end
+  
 end
 EOL
 # Start both master and slave VMs
 echo "Creating and provisioning '$master_vm' and '$slave_vm' VMs..."
 vagrant up
 
-# Check if both VMs are up and running else exit....
-if [ "$(vagrant status | grep -c 'running')" -ne 2 ]; then
+# Check if all VMs are up and running else exit....
+if [ "$(vagrant status | grep -c 'running')" -ne 3 ]; then
     echo "Error: Not all VMs are running."
     echo "Error may be due to dhcp clash or Host's BIOS vtx settings"
     echo "Exiting...."
@@ -165,7 +176,7 @@ ssh_exec "$master_vm" "ps aux"
 
 
 #############################################################
-# 6. Setting up LAMP Stack development
+# 6. Setting up LAMP Stack on Master and Slave node
 #############################################################
 
 # Function to set MySQL root password using debconf-set-selections
@@ -204,23 +215,76 @@ echo "LAMP stack installed and configured on both nodes."
 
 echo "Testing PHP functionality with Apache on both nodes..."
 
-# Create a PHP test file
-php_test_file="<?php phpinfo(); ?>"
+master_php_content="<h3>PHP setup on the master node</h3></br> <?php phpinfo(); ?>"
+ssh_exec "$master_vm" "touch test.php"
+ssh_exec "$master_vm" "echo '${master_php_content}' > test.php"
+ssh_exec "$master_vm" "sudo mv test.php /var/www/html/"
 
-ssh_exec "$master_vm" "echo '$php_test_file' > test-$master_vm.php"
-ssh_exec "$master_vm" "sudo mv test-$master_vm.php /var/www/html/"
+slave_php_content="<h3>PHP setup on the slave node</h3></br> <?php phpinfo(); ?>"
+ssh_exec "$slave_vm" "touch test.php"
+ssh_exec "$slave_vm" "echo '${slave_php_content}' > test.php"
+ssh_exec "$slave_vm" "sudo mv test.php /var/www/html/"
 
-ssh_exec "$slave_vm" "echo '$php_test_file' > test-$slave_vm.php"
-ssh_exec "$slave_vm" "sudo mv test-$slave_vm.php /var/www/html/"
-echo "PHP test file moved to /var/www/html/"
+echo "PHP test files moved to /var/www/html/"
 
 # Get IP addresses of testing php on 'Master' and 'Slave' VMs
 master_ip_list=$(ssh_exec "$master_vm" "hostname -I")
 slave_ip_list=$(ssh_exec "$slave_vm" "hostname -I")
+load_balancer_ip_list=$(ssh_exec "$load_balancer_vm" "hostname -I")
 
 master_ip=$(echo "$master_ip_list" | awk '{print $2}')
 slave_ip=$(echo "$slave_ip_list" | awk '{print $2}')
+load_balancer_ip=$(echo "$load_balancer_ip_list" | awk '{print $2}')
 
-echo "Deployment completed!"
-echo "Visit: http://$master_ip/test-$master_vm.php to validate the '$master_vm' PHP setup"
-echo "Visit: http://$slave_ip/test-$slave_vm.php to validate the '$slave_vm' PHP setup"
+###############################################################################
+# 8. Install and Configure Nginx as a Load Balancer on the load balancer node
+###############################################################################
+
+# Install and configure Nginx as a load balancer on the 'load_balancer' VM
+echo "Installing and configuring Nginx as a load balancer on '$load_balancer_vm'..."
+ssh_exec "$load_balancer_vm" "sudo apt-get update"
+ssh_exec "$load_balancer_vm" "sudo apt-get install -y nginx"
+
+# Create an Nginx configuration file for load balancing
+nginx_config_file="/etc/nginx/sites-available/load_balancer"
+nginx_config_content=$(cat <<EOL
+upstream backend {
+    server $master_ip weight=1;
+    server $slave_ip weight=1;
+}
+
+server {
+    listen 8080;
+    server_name load_balancer;
+
+    location / {
+        proxy_pass http://backend;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+    }
+}
+EOL
+)
+ssh_exec "$load_balancer_vm" "echo '${nginx_config_content}' | sudo tee $nginx_config_file"
+
+# Create a symbolic link to enable the Nginx configuration
+ssh_exec "$load_balancer_vm" "sudo ln -s $nginx_config_file /etc/nginx/sites-enabled/"
+
+# Test Nginx configuration and reload Nginx
+ssh_exec "$load_balancer_vm" "sudo nginx -t"
+ssh_exec "$load_balancer_vm" "sudo systemctl reload nginx"
+
+echo "Nginx load balancer configuration completed."
+
+GREEN=`tput setaf 2`
+echo -e ${GREEN}"
+###############################################
+#           Deployment Successful             #
+############################################### \n"
+
+echo "PHP test"
+echo "Visit: http://$master_ip/test.php to validate the '$master_vm' PHP setup"
+echo -e "Visit: http://$slave_ip/test.php to validate the '$slave_vm' PHP setup \n"
+
+echo "Load balancer test link"
+echo "Visit: http://$load_balancer_ip:8080/test.php"
