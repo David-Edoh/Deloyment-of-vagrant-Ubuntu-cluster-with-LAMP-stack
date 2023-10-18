@@ -17,7 +17,7 @@ To use the script, follow these steps:
 1. **clone the repository and cd into it:**
 
    ```bash
-   git clone && cd...
+   git clone https://github.com/David-Edoh/Deploy-LAMP-Cluster-with-Vagrant.git && cd Deploy-LAMP-Cluster-with-Vagrant 
    ```
 2. **make the script executable:**
 
