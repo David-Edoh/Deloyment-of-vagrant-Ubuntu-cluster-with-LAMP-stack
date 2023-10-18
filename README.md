@@ -1,4 +1,4 @@
-# Deloyment of vagrant Ubuntu cluster with LAMP stack
+# Deployment of vagrant Ubuntu cluster with LAMP stack
 
 ## Introduction
 
