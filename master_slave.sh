@@ -4,6 +4,10 @@
 default_username="altschool"
 default_password="password123"
 
+master_ip="192.168.56.5"
+slave_ip="192.168.56.6"
+load_balancer_ip="192.168.56.7"
+
 # Function to display script usage
 usage() {
     echo "Usage: $0 [-u <username>] [-p <password>]"
@@ -36,7 +40,7 @@ password="${password:-$default_password}"
 # Define VM names
 master_vm="master"
 slave_vm="slave"
-load_balancer_vm="load_balancer"
+load_balancer_vm="lb"
 
 # Define VM configurations
 vm_memory="512"
@@ -57,7 +61,7 @@ cat <<EOL > Vagrantfile
 Vagrant.configure("2") do |config|
   config.vm.define "$master_vm" do |$master_vm|
     $master_vm.vm.box = "$vm_box"
-    $master_vm.vm.network "private_network", type: "dhcp"
+    $master_vm.vm.network "private_network", type: "static", ip: "$master_ip"
     $master_vm.vm.provider "virtualbox" do |vb|
       vb.memory = "$vm_memory"
       vb.cpus = 1
@@ -66,7 +70,7 @@ Vagrant.configure("2") do |config|
 
   config.vm.define "$slave_vm" do |$slave_vm|
     $slave_vm.vm.box = "$vm_box"
-    $slave_vm.vm.network "private_network", type: "dhcp"
+    $slave_vm.vm.network "private_network", type: "static", ip: "$slave_ip"
     $slave_vm.vm.provider "virtualbox" do |vb|
       vb.memory = "$vm_memory"
       vb.cpus = 1
@@ -75,7 +79,7 @@ Vagrant.configure("2") do |config|
 
   config.vm.define "$load_balancer_vm" do |$load_balancer_vm|
     $load_balancer_vm.vm.box = "$vm_box"
-    $load_balancer_vm.vm.network "private_network", type: "dhcp"
+    $load_balancer_vm.vm.network "private_network", type: "static", ip: "$load_balancer_ip"
     $load_balancer_vm.vm.provider "virtualbox" do |vb|
       vb.memory = "$vm_memory"
       vb.cpus = 1
