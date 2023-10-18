@@ -14,14 +14,25 @@ Before using this script, ensure you have the following software installed on yo
 
 To use the script, follow these steps:
 
-1. **Run the Script:**
+1. **clone the repository and cd into it:**
+
+   ```bash
+   git clone && cd...
+   ```
+2. **make the script executable:**
+
+   ```bash
+   chmod u+x master_slave.sh
+   ```
+
+3. **Run the Script:**
 
    ```bash
    ./master_slave.sh
    ```
 
 
-2. **Optional Arguments:**
+4. **Optional Arguments:**
 
    - `-u <username>`: Set the desired username for VMs (default: altschool).
    - `-p <password>`: Set the desired password for VMs (default: password123).
