@@ -1,4 +1,5 @@
 # Deployment of vagrant Ubuntu cluster with LAMP stack
+![lamp_vagrant](https://github.com/David-Edoh/Deploy-LAMP-Cluster-with-Vagrant/assets/45123163/1d22e71a-c815-436d-b343-98220e48a210)
 
 ## Introduction
 
@@ -14,12 +15,12 @@ Before using this script, ensure you have the following software installed on yo
 
 To use the script, follow these steps:
 
-1. **clone the repository and cd into it:**
+1. **Clone the repository and cd into it:**
 
    ```bash
    git clone https://github.com/David-Edoh/Deploy-LAMP-Cluster-with-Vagrant.git && cd Deploy-LAMP-Cluster-with-Vagrant 
    ```
-2. **make the script executable:**
+2. **Make the script executable:**
 
    ```bash
    chmod u+x master_slave.sh
