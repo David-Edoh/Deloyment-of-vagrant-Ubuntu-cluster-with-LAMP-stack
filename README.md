@@ -3,7 +3,7 @@
 
 ## Introduction
 
-The Vagrant VM Setup script automates the creation and configuration of Virtual Machines (VMs) using Vagrant. It is designed to set up a master VM and a slave VM, configure user management, enable inter-node communication, copy files between VMs, install a LAMP stack, and validate PHP functionality with Apache.
+The Vagrant VM Setup script automates the creation and configuration of Virtual Machines (VMs) using Vagrant. It is designed to set up a master VM and a slave VM, configure user management, enable inter-node communication, copy files between VMs, install a LAMP stack, validates PHP functionality with Apache, and sets up a load balancer to direct traffic to the master and slave.
 
 ## Prerequisites
 Before using this script, ensure you have the following software installed on your system:
